@@ -1,0 +1,11 @@
+steps:
+  - name: 'gcr.io/cloud-builders/mvn'
+    args: ['clean', 'install']
+  - name: 'gcr.io/cloud-builders/curl'
+    args: ['https://github.com/veracode/veracode-java-api-wrapper/releases/download/v1.0/veracode-java-api-wrapper.zip', '-o', 'veracode-java-api-wrapper.zip']
+  - name: 'gcr.io/cloud-builders/unzip'
+    args: ['veracode-java-api-wrapper.zip']
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args: ['beta', 'run', 'run-java', '--region', 'us-central1', '--image-project', 'java-runtime', '--image', 'openjdk-11-r1', '--command', 'bash', '-c', 'if [[ "$BRANCH_NAME" == "master" ]]; then java -jar veracode-java-api-wrapper/veracode-api-wrapper.jar -action uploadandscan -appname $APP_NAME -filepath target/*.war -vid $VERACODE_API_ID -vkey $VERACODE_API_KEY; else java -jar
+
+#here is an example of a cloudbuild.yaml file that builds a Java project and runs a Veracode scan (either a policy scan or a sandbox scan) based on the name of the branch using the Veracode Java API Wrapper. Rename the file accordingly.

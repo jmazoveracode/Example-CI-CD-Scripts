@@ -1,0 +1,39 @@
+version: 2.1
+
+jobs:
+  build:
+    docker:
+      - image: openjdk:8-jdk
+    steps:
+      - checkout
+      - run:
+          name: Install maven and unzip
+          command: apt-get update && apt-get install -y maven unzip
+      - run:
+          name: Build project
+          command: mvn clean install
+      - run:
+          name: Download Veracode Java API Wrapper
+          command: wget https://github.com/veracode/veracode-java-api-wrapper/releases/download/v1.0/veracode-java-api-wrapper.zip
+      - run:
+          name: Unzip Veracode Java API Wrapper
+          command: unzip veracode-java-api-wrapper.zip
+      - run:
+          name: Set Veracode environment variables
+          command: |
+            echo "veracode_api_key=<YOUR_VERACODE_API_KEY>" >> $BASH_ENV
+            echo "veracode_api_id=<YOUR_VERACODE_API_ID>" >> $BASH_ENV
+      - run:
+          name: Run Veracode scan
+          command: java -jar veracode-java-api-wrapper/veracode-api-wrapper.jar -action uploadandscan -appname <YOUR_APP_NAME> -filepath target/*.war
+
+
+#This script uses the openjdk:8-jdk Docker image, which includes the Java 8 JDK. The script first checks out the code from the repository, then installs Maven (a Java build tool) and unzip, and finally runs the command mvn clean install to build the project.
+#Then it downloads and unzips the Veracode Java API Wrapper, sets the Veracode environment variables and runs the command java -jar veracode-java-api-wrapper/veracode-api-wrapper.jar -action uploadandscan -appname <YOUR_APP_NAME> -filepath target/*.war to run the Veracode scan.
+
+#You should replace <YOUR_VERACODE_API_KEY> and <YOUR_VERACODE_API_ID> with your actual Veracode API key and ID, and <YOUR_APP_NAME> with the name of your application.
+
+#You may also want to adjust the filepath of your application, if it's not in the target directory and also you may want to change the command to mvn clean install -DskipTests if you want to skip tests during build.
+
+#Please note, this is a basic example and you should adjust it to your project requirements, and also make sure you have the correct permissions to run this.
+#rename file to .circleci/config.yml

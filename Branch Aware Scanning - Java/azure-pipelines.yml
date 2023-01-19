@@ -1,0 +1,33 @@
+trigger:
+- master
+- dev
+
+pool:
+  vmImage: 'Ubuntu-16.04'
+
+variables:
+  veracodeApiKey: '<YOUR_VERACODE_API_KEY>'
+  veracodeApiId: '<YOUR_VERACODE_API_ID>'
+  appName: '<YOUR_APP_NAME>'
+  sandboxName: '<YOUR_SANDBOX_NAME>'
+
+steps:
+- script: |
+    apt-get update
+    apt-get install -y maven unzip
+    mvn clean install
+    wget https://github.com/veracode/veracode-java-api-wrapper/releases/download/v1.0/veracode-java-api-wrapper.zip
+    unzip veracode-java-api-wrapper.zip
+    echo "veracode_api_key=$(veracodeApiKey)" >> $BASH_ENV
+    echo "veracode_api_id=$(veracodeApiId)" >> $BASH_ENV
+    if [[ "$(Build.SourceBranch)" == "refs/heads/master" ]]; then
+      java -jar veracode-java-api-wrapper/veracode-api-wrapper.jar -action uploadandscan -appname $(appName) -filepath target/*.war
+    else
+      java -jar veracode-java-api-wrapper/veracode-api-wrapper.jar -action createanduploadsandbox -appname $(appName) -filepath target/*.war -sandbox $(sandboxName)
+    fi
+  displayName: 'Build and scan with Veracode'
+
+#Then it downloads and unzips the Veracode Java API Wrapper, sets the Veracode environment variables and runs the command if [[ "$(Build.SourceBranch)" == "refs/heads/master" ]]; then java -jar veracode-java-api-wrapper/veracode-api-wrapper.jar -action uploadandscan -appname $(appName) -filepath target/*.war; else java -jar veracode-java-api-wrapper/veracode-api-wrapper.jar -action createanduploadsandbox -appname $(appName) -filepath target/*.war -sandbox $(sandboxName); fi to run the Veracode scan.
+
+#It will run a policy scan if the branch name is "master" and a sandbox scan if the branch name is not "master", and the sandbox name should be the name of your sandbox.
+You should replace <YOUR_VERACODE_API_KEY>,<YOUR_VERACODE_API_ID>,<YOUR_APP_NAME> and <YOUR_SANDBOX_NAME> with your actual Veracode API key, ID, app name

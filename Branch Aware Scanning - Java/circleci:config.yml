@@ -1,0 +1,41 @@
+version: 2.1
+
+jobs:
+  build:
+    docker:
+      - image: openjdk:8-jdk
+    steps:
+      - checkout
+      - run:
+          name: Install maven and unzip
+          command: apt-get update && apt-get install -y maven unzip
+      - run:
+          name: Build project
+          command: mvn clean install
+      - run:
+          name: Download Veracode Java API Wrapper
+          command: wget https://github.com/veracode/veracode-java-api-wrapper/releases/download/v1.0/veracode-java-api-wrapper.zip
+      - run:
+          name: Unzip Veracode Java API Wrapper
+          command: unzip veracode-java-api-wrapper.zip
+      - run:
+          name: Set Veracode environment variables
+          command: |
+            echo "veracode_api_key=<YOUR_VERACODE_API_KEY>" >> $BASH_ENV
+            echo "veracode_api_id=<YOUR_VERACODE_API_ID>" >> $BASH_ENV
+      - run:
+          name: Run Veracode scan
+          command: |
+            if [[ "$CIRCLE_BRANCH" == "master" ]]; then
+              java -jar veracode-java-api-wrapper/veracode-api-wrapper.jar -action uploadandscan -appname <YOUR_APP_NAME> -filepath target/*.war
+            else
+              java -jar veracode-java-api-wrapper/veracode-api-wrapper.jar -action createanduploadsandbox -appname <YOUR_APP_NAME> -filepath target/*.war -sandbox <SANDBOX_NAME>
+            fi
+
+#Then it downloads and unzips the Veracode Java API Wrapper, sets the Veracode environment variables and runs the command if [[ "$CIRCLE_BRANCH" == "master" ]]; then java -jar veracode-java-api-wrapper/veracode-api-wrapper.jar -action uploadandscan -appname <YOUR_APP_NAME> -filepath target/*.war; else java -jar veracode-java-api-wrapper/veracode-api-wrapper.jar -action createanduploadsandbox -appname <YOUR_APP_NAME> -filepath target/*.war -sandbox <SANDBOX_NAME>; fi to run the Veracode scan.
+
+#It will run a policy scan if the branch name is "master" and a sandbox scan if the branch name is not "master", and the sandbox name should be the name of your sandbox.
+
+#You should replace `
+
+#rename file to: .circleci.config.yml

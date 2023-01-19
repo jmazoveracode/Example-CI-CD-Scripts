@@ -1,0 +1,32 @@
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - echo Logging in to Amazon ECR...
+      - $(aws ecr get-login --region $AWS_DEFAULT_REGION --no-include-email)
+  build:
+    commands:
+      - echo Build started on `date`
+      - apt-get update
+      - apt-get install -y maven unzip
+      - mvn clean install
+      - wget https://github.com/veracode/veracode-java-api-wrapper/releases/download/v1.0/veracode-java-api-wrapper.zip
+      - unzip veracode-java-api-wrapper.zip
+      - echo "veracode_api_key=$VERACODE_API_KEY" >> $BASH_ENV
+      - echo "veracode_api_id=$VERACODE_API_ID" >> $BASH_ENV
+      - if [[ "$CODEBUILD_WEBHOOK_HEAD_REF" == "master" ]]; then
+          java -jar veracode-java-api-wrapper/veracode-api-wrapper.jar -action uploadandscan -appname $APP_NAME -filepath target/*.war;
+        else
+          java -jar veracode-java-api-wrapper/veracode-api-wrapper.jar -action createanduploadsandbox -appname $APP_NAME -filepath target/*.war -sandbox $SANDBOX_NAME;
+        fi
+      - echo Build completed on `date`
+
+env:
+  variables:
+    VERACODE_API_KEY: '<YOUR_VERACODE_API_KEY>'
+    VERACODE_API_ID: '<YOUR_VERACODE_API_ID>'
+    APP_NAME: '<YOUR_APP_NAME>'
+    SANDBOX_NAME: '<YOUR_SANDBOX_NAME>'
+
+#This script uses the Ubuntu image, it first installs Maven and unzip, then runs the command mvn clean install to build

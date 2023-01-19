@@ -1,0 +1,18 @@
+steps:
+  - name: 'gcr.io/cloud-builders/mvn'
+    args: ['clean', 'install']
+  - name: 'gcr.io/cloud-builders/curl'
+    args: ['https://github.com/veracode/veracode-java-api-wrapper/releases/download/v1.0/veracode-java-api-wrapper.zip', '-o', 'veracode-java-api-wrapper.zip']
+  - name: 'gcr.io/cloud-builders/unzip'
+    args: ['veracode-java-api-wrapper.zip']
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args: ['beta', 'run', 'run-java', '--region', 'us-central1', '--image-project', 'java-runtime', '--image', 'openjdk-11-r1', '--command', 'java', '-jar', 'veracode-java-api-wrapper/veracode-api-wrapper.jar', '-action', 'uploadandscan', '-appname', '<YOUR_APP_NAME>', '-filepath', 'target/*.war', '-vid', '<YOUR_VERACODE_API_ID>', '-vkey', '<YOUR_VERACODE_API_KEY>']
+#This script uses the gcr.io/cloud-builders/mvn to build your Java project, then it uses gcr.io/cloud-builders/curl to download the Veracode Java API Wrapper, then it uses gcr.io/cloud-builders/unzip to unzip the Veracode Java API Wrapper and finally it uses gcr.io/cloud-builders/gcloud to run the Veracode scan using the command java -jar veracode-java-api-wrapper/veracode-api-wrapper.jar -action uploadandscan -appname <YOUR_APP_NAME> -filepath target/*.war -vid <YOUR_VERACODE_API_ID> -vkey <YOUR_VERACODE_API_KEY>
+
+#You should replace <YOUR_VERACODE_API_KEY> and <YOUR_VERACODE_API_ID> with your actual Veracode API key and ID, and <YOUR_APP_NAME> with the name of your application.
+
+#You may also want to adjust the filepath of your application, if it's not in the target directory and also you may want to adjust the region, image-project, and image accordingly.
+
+#Please note, this is a basic example and you should adjust it to your project requirements, and also make sure you have the correct permissions to run this.
+
+#Rename this file to cloudbuild.yaml
